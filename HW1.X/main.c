@@ -38,7 +38,7 @@
 
 
 int main() {
-
+    int test = 1;
     __builtin_disable_interrupts();
 
     // set the CP0 CONFIG register to indicate that kseg0 is cacheable (0x3)
@@ -55,21 +55,21 @@ int main() {
 
     // do your TRIS and LAT commands here
     TRISAbits.TRISA4 = 0; // A4 is a digital output
-    TRISBbits.TRISB4 = 1; // B4 is output compare
+    TRISBbits.TRISB4 = 1; // B4 is input
+    LATAbits.LATA4 = 1; // turn the LED on
     __builtin_enable_interrupts();
 
-    while(1) {
+    while(test == 1) {
 	    // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
 		  // remember the core timer runs at half the CPU speed
-        _CP0_SET_COUNT(0);
-        LATAbits.LATA4 = 0;
-        while (_CP0_GET_COUNT() < 12000) { // .5ms loop before LED turns off
-            ;
-        }
         LATAbits.LATA4 = 1;
-        _CP0_SET_COUNT(0);
-        while (_CP0_GET_COUNT() < 12000) { // .5ms loop before LED turns back on
-            ;
+        while (PORTBbits.RB4 == 1) {
+            _CP0_SET_COUNT(0);
+            LATAbits.LATA4 = 0; //toggle LED
+            while (_CP0_GET_COUNT() < 12000) {} // .5ms loop before LED turns off
+            LATAbits.LATA4 = 1;
+            _CP0_SET_COUNT(0);
+            while (_CP0_GET_COUNT() < 12000) {} // .5ms loop before LED turns back on
         }
     }
 }
