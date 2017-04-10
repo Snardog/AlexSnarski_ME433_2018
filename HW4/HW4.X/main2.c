@@ -12,8 +12,6 @@
 // 
 // Only uses the SRAM's sequential mode
 #include <math.h>
-#include<xc.h>           // processor SFR definitions
-#include<sys/attribs.h>  // __ISR macro
 #define NUMSAMPS 1000
 #define CS LATBbits.LATB7       // chip select pin
 #define pi 3.1415
