@@ -13791,6 +13791,10 @@ This footprint was designed to help hold the alignment of a through-hole compone
 </nets>
 </sheet>
 </sheets>
+<errors>
+<approved hash="113,1,80.6027,2.60773,J2,,,,,"/>
+<approved hash="113,1,80.6027,-25.3323,J3,,,,,"/>
+</errors>
 </schematic>
 </drawing>
 </eagle>

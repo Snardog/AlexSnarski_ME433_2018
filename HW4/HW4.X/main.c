@@ -14,8 +14,8 @@
 #define NUMSAMPS 1000
 #define CS LATBbits.LATB7       // chip select pin
 
-static int Waveform1[NUMSAMPS];
-static int Waveform2[NUMSAMPS];
+static int sineWave[NUMSAMPS];
+static int sawWave[NUMSAMPS];
 
 
 unsigned char SPI1_IO(unsigned char o) {
@@ -43,6 +43,18 @@ void initSPI1() {
     RPB15Rbits.RPB15R = 0b0101; //RB15 is OC1 (pin 25)
     RPB8Rbits.RPB8R = 0b0011; //RB8 is SDO1 (pin 17)
     SDI1Rbits.SDI1R = 0b0000; // RA1 is SDI1 (pin 3)
+    SPI1CON = 0;              // turn off the spi module and reset it
+    SPI1BUF;                  // clear the rx buffer by reading from it
+    SPI1BRG = 0x3;            // baud rate to 10 MHz [SPI4BRG = (80000000/(2*desired))-1]
+    SPI1STATbits.SPIROV = 0;  // clear the overflow bit
+    SPI1CONbits.CKE = 1;      // data changes when clock goes from hi to lo (since CKP is 0)
+    SPI1CONbits.MSTEN = 1;    // master operation
+    SPI1CONbits.ON = 1;       // turn on spi 
+    
+    CS = 0;
+    SPI1_IO(0x01);
+    SPI1_IO(ox41);
+    CS = 1;
 }
 
 void makeWaveform() {
@@ -51,7 +63,7 @@ void makeWaveform() {
     int center = 1.5;
     int i = 0;
     for (i = 0; i < NUMSAMPS; i++) {
-        Waveform1[i] = center + A*sin(20*pi*i/NUMSAMPS)
+        sineWave[i] = center + A*sin(20*pi*i/NUMSAMPS);
     }
     // 5Hz triangle wave
     int counter;
@@ -61,8 +73,8 @@ void makeWaveform() {
             x = 0;
             counter = 0;
         }
-        Waveform2[i] = 3*x/(NUMSAMPS/5);
+        sawWave[i] = 3*x/(NUMSAMPS/5);
         x++;
         counter++;
     }
-}   
+}
