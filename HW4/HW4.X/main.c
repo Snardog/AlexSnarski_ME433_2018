@@ -56,8 +56,8 @@
 
 void setVoltage(char channel, char voltage);
 
-static int sineWave[NUMSAMPS];
-static int sawWave[NUMSAMPS];
+static unsigned int sineWave[NUMSAMPS];
+static unsigned int sawWave[NUMSAMPS];
 
 //void __ISR(_TIMER_2_VECTOR, IPL5SOFT) spi(void) {
 //    static int count = 0;
@@ -124,15 +124,15 @@ int main(void) {
     int j = 0;
     int count = 0;
     while (1) {
-        //float x;
-        delay(6000);
+        _CP0_SET_COUNT(0);
+        while (_CP0_GET_COUNT() < 48000000/2000) {}
         sine = sineWave[count];
-        setVoltage(channelA, sineWave);
+        setVoltage(channelA, sine);
         
         // triangle wave at 5 Hz
         //x= (float)j/NUMSAMPS;
         saw = sawWave[count];
-        //setVoltage(channelB, sawWave);
+        setVoltage(channelB, saw);
         count++;
         if (count == NUMSAMPS) {
             count = 0;
@@ -145,15 +145,23 @@ int main(void) {
 
 void setVoltage(char channel, char voltage) {
     short data = 0b0000000000000000; //16 bit number
-    data |= channel << 15; //puts the channel on the 16th bit
-    data |= 0b111 << 12; // set next 3 config bits to 1
-    data |= voltage << 4; // voltage stored in next 8 bits
+    short b1;
+    short b2;
+//    data |= channel << 15; //puts the channel on the 16th bit
+//    data |= 0b111 << 12; // set next 3 config bits to 1
+//    data |= voltage << 4; // voltage stored in next 8 bits
+    b1 = channel << 7;
+    b1 = b1 | 0b1110000;
+    b1 = b1 | (voltage >> 4);
+    b2 = voltage << 4;
+            
+       
 	CS = 0;
 //    char configbits = channel << 3 | 0b0111;
 //    unsigned short word = (configbits << 12) | (voltage << 4);
     
-    SPI1_IO(data >> 8);
-    SPI1_IO(data << 8);
+    SPI1_IO(b1);
+    SPI1_IO(b2);
     CS = 1;
 }
 
@@ -161,14 +169,14 @@ void initSPI1() {
     //ANSELAbits.ANSA0 = 0; //turn off analog for A0
     TRISAbits.TRISA0 = 0; //set A0 as output
     SDI1Rbits.SDI1R = 0b0000; //set A1 as SDI1 (input, not used)
-    RPA0Rbits.RPA0R = 0b0011; //set A0 as SS1 (output))
+    //RPA0Rbits.RPA0R = 0b0011; //set A0 as SS1 (output))
     RPB8Rbits.RPB8R = 0b0011; //set B8 as SDO1 (output)
     
     CS = 1;
     SPI1CON = 0;              // turn off the spi module and reset it
 	
     SPI1BUF;                  // clear the rx buffer by reading from it
-    SPI1BRG = 0x300;            // baud rate to 10 MHz [SPI4BRG = (80000000/(2*desired))-1]
+    SPI1BRG = 0x1000;            // baud rate to 10 MHz [SPI4BRG = (80000000/(2*desired))-1]
     SPI1STATbits.SPIROV = 0;  // clear the overflow bit
     SPI1CONbits.CKE = 1;      // data changes when clock goes from hi to lo (since CKP is 0)
     //SPI1CONbits.CKP = 0;
@@ -178,24 +186,28 @@ void initSPI1() {
 
 void makeWaveform() {
     // 10Hz sin wave
-    int A = 1.5;
-    int center = 0;
+//    int A = 127;
+//    int center = 127;
     int i = 0;
+    double temp;
     for (i = 0; i < NUMSAMPS; i++) {
-        sineWave[i] = center + A*sin(20*pi*i/NUMSAMPS);
+        temp = 255.0/2.0 + 255.0/2.0*sin(2.0*3.14*i/NUMSAMPS);
+        sineWave[i] = temp;
+        temp = i*255.0/NUMSAMPS;
+        sawWave[i] = temp;
     }
     // 5Hz triangle wave
-    int counter;
-    int x = 0;
-    for (i = 0; i < NUMSAMPS; i++) {
-        if (counter == NUMSAMPS/5) {
-            x = 0;
-            counter = 0;
-        }
-        sawWave[i] = 3*x/(NUMSAMPS/5);
-        x++;
-        counter++;
-    }
+//    int counter;
+//    int x = 0;
+//    for (i = 0; i < NUMSAMPS; i++) {
+//        if (counter == NUMSAMPS/5) {
+//            x = 0;
+//            counter = 0;
+//        }
+//        sawWave[i] = 3*x/(NUMSAMPS/5);
+//        x++;
+//        counter++;
+//    }
 }
 
 void delay(int time) {
@@ -206,3 +218,22 @@ void delay(int time) {
     ;
     }
 }
+
+
+
+//notes from class 4/11/17
+//10k pull up to 3.3 for SCL and SDA
+//Conditions:
+//  Start
+//  Write
+//      1st write: address << 1 | 1
+//      2nd write: data (8bits)
+//  Stop
+//
+//  Start
+//  Write
+//      Write address << 1 | w
+//  Restart
+//  Write
+//      address << 1 | R
+//  Read
