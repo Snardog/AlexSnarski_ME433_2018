@@ -50,7 +50,8 @@
 #include <math.h>
 #include<xc.h>           // processor SFR definitions
 #include<sys/attribs.h>  // __ISR macro
-#define NUMSAMPS 1000
+
+#define NUMSAMPS 100
 #define CS LATAbits.LATA0       // chip select pin
 #define pi 3.1415
 
@@ -58,20 +59,6 @@ void setVoltage(char channel, char voltage);
 
 static unsigned int sineWave[NUMSAMPS];
 static unsigned int sawWave[NUMSAMPS];
-
-//void __ISR(_TIMER_2_VECTOR, IPL5SOFT) spi(void) {
-//    static int count = 0;
-//    
-//    setVoltage(0,sineWave[count]);
-//    setVoltage(1,sawWave[count]);
-//    count++;
-//    if (count == NUMSAMPS) {
-//        count = 0;
-//    }
-//    
-//    
-//    IFS0bits.T2IF = 0;              // clear interrupt flag
-//}
 
 unsigned char SPI1_IO(unsigned char o) {
   SPI1BUF = o;
@@ -118,22 +105,24 @@ int main(void) {
     
     char channelA = 0;
     char channelB = 1;
-    unsigned char sine;
-    unsigned char saw;
-    int i = 0;
-    int j = 0;
+    unsigned int sine;
+    unsigned int saw;
     int count = 0;
+    int x = 0;
     while (1) {
         _CP0_SET_COUNT(0);
-        while (_CP0_GET_COUNT() < 48000000/2000) {}
-        sine = sineWave[count];
-        setVoltage(channelA, sine);
-        
-        // triangle wave at 5 Hz
-        //x= (float)j/NUMSAMPS;
-        saw = sawWave[count];
-        setVoltage(channelB, saw);
-        count++;
+        while (_CP0_GET_COUNT() < 48000000/2000) {
+        ;//do nothing
+        }
+        sine = (127/2.0) + (127/2.0)*sin(2.0*3.14*count/NUMSAMPS);
+        setVoltage(0, sine);
+        saw = 256*x/NUMSAMPS;
+        setVoltage(1, saw);
+        count = count + 2;
+        x++;
+        if (x == NUMSAMPS) {
+            x = 0;
+        }
         if (count == NUMSAMPS) {
             count = 0;
         }
@@ -153,7 +142,7 @@ void setVoltage(char channel, char voltage) {
     b1 = channel << 7;
     b1 = b1 | 0b1110000;
     b1 = b1 | (voltage >> 4);
-    b2 = voltage << 4;
+    //b2 = voltage << 4;
             
        
 	CS = 0;
@@ -161,7 +150,7 @@ void setVoltage(char channel, char voltage) {
 //    unsigned short word = (configbits << 12) | (voltage << 4);
     
     SPI1_IO(b1);
-    SPI1_IO(b2);
+    SPI1_IO(voltage << 4);
     CS = 1;
 }
 
@@ -176,46 +165,26 @@ void initSPI1() {
     SPI1CON = 0;              // turn off the spi module and reset it
 	
     SPI1BUF;                  // clear the rx buffer by reading from it
-    SPI1BRG = 0x1000;            // baud rate to 10 MHz [SPI4BRG = (80000000/(2*desired))-1]
+    SPI1BRG = 0x300;            // baud rate to 10 MHz [SPI4BRG = (80000000/(2*desired))-1]
     SPI1STATbits.SPIROV = 0;  // clear the overflow bit
     SPI1CONbits.CKE = 1;      // data changes when clock goes from hi to lo (since CKP is 0)
-    //SPI1CONbits.CKP = 0;
     SPI1CONbits.MSTEN = 1;    // master operation
     SPI1CONbits.ON = 1;       // turn on spi 
 }
 
 void makeWaveform() {
     // 10Hz sin wave
-//    int A = 127;
-//    int center = 127;
-    int i = 0;
-    double temp;
+    double A = 200;
+    double center = 200;
+    int i = 0.0;
+    double x = 0;
+    unsigned int temp;
     for (i = 0; i < NUMSAMPS; i++) {
-        temp = 255.0/2.0 + 255.0/2.0*sin(2.0*3.14*i/NUMSAMPS);
+        temp = (center/2.0) + (A/2.0)*sin(2.0*3.14*i/NUMSAMPS);
         sineWave[i] = temp;
-        temp = i*255.0/NUMSAMPS;
+        temp = x*255.0/NUMSAMPS;
         sawWave[i] = temp;
-    }
-    // 5Hz triangle wave
-//    int counter;
-//    int x = 0;
-//    for (i = 0; i < NUMSAMPS; i++) {
-//        if (counter == NUMSAMPS/5) {
-//            x = 0;
-//            counter = 0;
-//        }
-//        sawWave[i] = 3*x/(NUMSAMPS/5);
-//        x++;
-//        counter++;
-//    }
-}
-
-void delay(int time) {
-    int delaytime = time; //in hz, core timer freq is half sysfreq
-    int starttime;
-    starttime = _CP0_GET_COUNT(); 
-    while ((int)_CP0_GET_COUNT() - starttime < delaytime){
-    ;
+        x = x + 1.0;
     }
 }
 
