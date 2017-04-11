@@ -51,7 +51,7 @@
 #include<xc.h>           // processor SFR definitions
 #include<sys/attribs.h>  // __ISR macro
 #define NUMSAMPS 1000
-#define CS LATBbits.LATB7       // chip select pin
+#define CS LATAbits.LATA0       // chip select pin
 #define pi 3.1415
 
 void setVoltage(char channel, char voltage);
@@ -59,19 +59,19 @@ void setVoltage(char channel, char voltage);
 static int sineWave[NUMSAMPS];
 static int sawWave[NUMSAMPS];
 
-void __ISR(_TIMER_2_VECTOR, IPL5SOFT) spi(void) {
-    static int count = 0;
-    
-    setVoltage(0,sineWave[count]);
-    setVoltage(1,sawWave[count]);
-    count++;
-    if (count == NUMSAMPS) {
-        count = 0;
-    }
-    
-    
-    IFS0bits.T2IF = 0;              // clear interrupt flag
-}
+//void __ISR(_TIMER_2_VECTOR, IPL5SOFT) spi(void) {
+//    static int count = 0;
+//    
+//    setVoltage(0,sineWave[count]);
+//    setVoltage(1,sawWave[count]);
+//    count++;
+//    if (count == NUMSAMPS) {
+//        count = 0;
+//    }
+//    
+//    
+//    IFS0bits.T2IF = 0;              // clear interrupt flag
+//}
 
 unsigned char SPI1_IO(unsigned char o) {
   SPI1BUF = o;
@@ -98,16 +98,16 @@ int main(void) {
     // disable JTAG to get pins back
     DDPCONbits.JTAGEN = 0;
     
-    T2CKRbits.T2CKR = 0x0000; //set RA0 as timer 2
-    T2CONbits.TCKPS = 0; //set prescaler 1:1
-    PR2 = 47999; //roll over at 48000, 1000Hz
-    TMR2 = 0; //initialize count to 0
-    T2CONbits.ON = 1; //timer2 on
-    IPC2CLR = 0x1F;
-    IPC2bits.T2IP = 5; //priority 5
-    IPC2bits.T2IS = 0; //sub-priority 0
-    IFS0bits.T2IF = 0; //clear interrupt flag
-    IEC0bits.T2IE = 1; //enable interrupt
+//    T2CKRbits.T2CKR = 0x0000; //set RA0 as timer 2
+//    T2CONbits.TCKPS = 0; //set prescaler 1:1
+//    PR2 = 47999; //roll over at 48000, 1000Hz
+//    TMR2 = 0; //initialize count to 0
+//    T2CONbits.ON = 1; //timer2 on
+//    IPC2CLR = 0x1F;
+//    IPC2bits.T2IP = 5; //priority 5
+//    IPC2bits.T2IS = 0; //sub-priority 0
+//    IFS0bits.T2IF = 0; //clear interrupt flag
+//    IEC0bits.T2IE = 1; //enable interrupt
     
     
     // do your TRIS and LAT commands here
@@ -116,42 +116,70 @@ int main(void) {
     LATAbits.LATA4 = 1; // turn the LED on
     __builtin_enable_interrupts();
     
-    
-    
-	return 0;
+    char channelA = 0;
+    char channelB = 1;
+    unsigned char sine;
+    unsigned char saw;
+    int i = 0;
+    int j = 0;
+    int count = 0;
     while (1) {
+        //float x;
+        delay(6000);
+        sine = sineWave[count];
+        setVoltage(channelA, sineWave);
+        
+        // triangle wave at 5 Hz
+        //x= (float)j/NUMSAMPS;
+        saw = sawWave[count];
+        //setVoltage(channelB, sawWave);
+        count++;
+        if (count == NUMSAMPS) {
+            count = 0;
+        }
+        
     }
-}
+    }
 
 
 
 void setVoltage(char channel, char voltage) {
+    short data = 0b0000000000000000; //16 bit number
+    data |= channel << 15; //puts the channel on the 16th bit
+    data |= 0b111 << 12; // set next 3 config bits to 1
+    data |= voltage << 4; // voltage stored in next 8 bits
 	CS = 0;
-    SPI1_IO(channel);
-    SPI1_IO(0x7);
-    SPI1_IO(voltage);
+//    char configbits = channel << 3 | 0b0111;
+//    unsigned short word = (configbits << 12) | (voltage << 4);
+    
+    SPI1_IO(data << 8);
+    SPI1_IO(data);
     CS = 1;
 }
 
 void initSPI1() {
-    SPI1CON = 0;              // turn off the spi module and reset it
-	RPB7Rbits.RPB7R = 0b0011; //RB7 is SS1 (pin 16)
-    RPB15Rbits.RPB15R = 0b0101; //RB15 is OC1 (pin 26)
-    RPB8Rbits.RPB8R = 0b0011; //RB8 is SDO1 (pin 17)
-    SDI1Rbits.SDI1R = 0b0000; // RA1 is SDI1 (pin 3)
+    //ANSELAbits.ANSA0 = 0; //turn off analog for A0
+    TRISAbits.TRISA0 = 0; //set A0 as output
+    SDI1Rbits.SDI1R = 0b0000; //set A1 as SDI1 (input, not used)
+    RPA0Rbits.RPA0R = 0b0011; //set A0 as SS1 (output))
+    RPB8Rbits.RPB8R = 0b0011; //set B8 as SDO1 (output)
     
+    CS = 1;
+    SPI1CON = 0;              // turn off the spi module and reset it
+	
     SPI1BUF;                  // clear the rx buffer by reading from it
-    SPI1BRG = 1;            // baud rate to 10 MHz [SPI4BRG = (80000000/(2*desired))-1]
+    SPI1BRG = 0x300;            // baud rate to 10 MHz [SPI4BRG = (80000000/(2*desired))-1]
     SPI1STATbits.SPIROV = 0;  // clear the overflow bit
     SPI1CONbits.CKE = 1;      // data changes when clock goes from hi to lo (since CKP is 0)
+    //SPI1CONbits.CKP = 0;
     SPI1CONbits.MSTEN = 1;    // master operation
     SPI1CONbits.ON = 1;       // turn on spi 
 }
 
 void makeWaveform() {
     // 10Hz sin wave
-    int A = 1.5;
-    int center = 1.5;
+    int A = 127;
+    int center = 127;
     int i = 0;
     for (i = 0; i < NUMSAMPS; i++) {
         sineWave[i] = center + A*sin(20*pi*i/NUMSAMPS);
@@ -167,5 +195,14 @@ void makeWaveform() {
         sawWave[i] = 3*x/(NUMSAMPS/5);
         x++;
         counter++;
+    }
+}
+
+void delay(int time) {
+    int delaytime = time; //in hz, core timer freq is half sysfreq
+    int starttime;
+    starttime = _CP0_GET_COUNT(); 
+    while ((int)_CP0_GET_COUNT() - starttime < delaytime){
+    ;
     }
 }
