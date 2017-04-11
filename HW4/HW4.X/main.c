@@ -152,8 +152,8 @@ void setVoltage(char channel, char voltage) {
 //    char configbits = channel << 3 | 0b0111;
 //    unsigned short word = (configbits << 12) | (voltage << 4);
     
+    SPI1_IO(data >> 8);
     SPI1_IO(data << 8);
-    SPI1_IO(data);
     CS = 1;
 }
 
@@ -178,8 +178,8 @@ void initSPI1() {
 
 void makeWaveform() {
     // 10Hz sin wave
-    int A = 127;
-    int center = 127;
+    int A = 1.5;
+    int center = 0;
     int i = 0;
     for (i = 0; i < NUMSAMPS; i++) {
         sineWave[i] = center + A*sin(20*pi*i/NUMSAMPS);
