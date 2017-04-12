@@ -3,46 +3,88 @@
 // Change I2C1 to the I2C channel you are using
 // I2C pins need pull-up resistors, 2k-10k
 #include "I2C.h"
+#define EXPANDER 0b01000000 //A1,A2,A3 = 0
 
 void i2c_master_setup(void) {
-  I2C1BRG = some number for 100kHz;            // I2CBRG = [1/(2*Fsck) - PGD]*Pblck - 2 
+  I2C2BRG = 233;            // I2CBRG = [1/(2*Fsck) - PGD]*Pblck - 2 Fsck = 100kHz PGD = 104ns
                                     // look up PGD for your PIC32
-  I2C1CONbits.ON = 1;               // turn on the I2C1 module
+  I2C2CONbits.ON = 1;               // turn on the I2C1 module
 }
 
 // Start a transmission on the I2C bus
 void i2c_master_start(void) {
-    I2C1CONbits.SEN = 1;            // send the start bit
-    while(I2C1CONbits.SEN) { ; }    // wait for the start bit to be sent
+    I2C2CONbits.SEN = 1;            // send the start bit
+    while(I2C2CONbits.SEN) { ; }    // wait for the start bit to be sent
 }
 
 void i2c_master_restart(void) {     
-    I2C1CONbits.RSEN = 1;           // send a restart 
-    while(I2C1CONbits.RSEN) { ; }   // wait for the restart to clear
+    I2C2CONbits.RSEN = 1;           // send a restart 
+    while(I2C2CONbits.RSEN) { ; }   // wait for the restart to clear
 }
 
 void i2c_master_send(unsigned char byte) { // send a byte to slave
-  I2C1TRN = byte;                   // if an address, bit 0 = 0 for write, 1 for read
-  while(I2C1STATbits.TRSTAT) { ; }  // wait for the transmission to finish
-  if(I2C1STATbits.ACKSTAT) {        // if this is high, slave has not acknowledged
+  I2C2TRN = byte;                   // if an address, bit 0 = 0 for write, 1 for read
+  while(I2C2STATbits.TRSTAT) { ; }  // wait for the transmission to finish
+  if(I2C2STATbits.ACKSTAT) {        // if this is high, slave has not acknowledged
     // ("I2C2 Master: failed to receive ACK\r\n");
   }
 }
 
 unsigned char i2c_master_recv(void) { // receive a byte from the slave
-    I2C1CONbits.RCEN = 1;             // start receiving data
-    while(!I2C1STATbits.RBF) { ; }    // wait to receive the data
-    return I2C1RCV;                   // read and return the data
+    I2C2CONbits.RCEN = 1;             // start receiving data
+    while(!I2C2STATbits.RBF) { ; }    // wait to receive the data
+    return I2C2RCV;                   // read and return the data
 }
 
 void i2c_master_ack(int val) {        // sends ACK = 0 (slave should send another byte)
                                       // or NACK = 1 (no more bytes requested from slave)
-    I2C1CONbits.ACKDT = val;          // store ACK/NACK in ACKDT
-    I2C1CONbits.ACKEN = 1;            // send ACKDT
-    while(I2C1CONbits.ACKEN) { ; }    // wait for ACK/NACK to be sent
+    I2C2CONbits.ACKDT = val;          // store ACK/NACK in ACKDT
+    I2C2CONbits.ACKEN = 1;            // send ACKDT
+    while(I2C2CONbits.ACKEN) { ; }    // wait for ACK/NACK to be sent
 }
 
 void i2c_master_stop(void) {          // send a STOP:
-  I2C1CONbits.PEN = 1;                // comm is complete and master relinquishes bus
-  while(I2C1CONbits.PEN) { ; }        // wait for STOP to complete
+  I2C2CONbits.PEN = 1;                // comm is complete and master relinquishes bus
+  while(I2C2CONbits.PEN) { ; }        // wait for STOP to complete
+}
+
+void initExpander(void) {
+    ANSELBbits.ANSB2 = 0; //turn off analog on B2 (SDA2)
+    ANSELBbits.ANSB3 = 0; //turn off analog on B3 (SCL2)
+    i2c_write(EXPANDER,0x00,0b11110000); //set GP0-3 as output, GP4-7 are inputs
+    i2c_write(EXPANDER,0x05,0b00100000); //SEQOP off
+}
+
+void setExpander(char level, char pin) {
+    unsigned char data = 0b00000000;
+    data = (data|level)<<pin;
+    i2c_write(EXPANDER,0x09,data);
+}
+
+char getExpander() {
+    unsigned char r;
+    r = i2c_read(EXPANDER,0x09); //receive state of pins
+    return r;
+}
+
+void i2c_write(unsigned char address, unsigned char registerr, unsigned char data) {
+    //had to spell register with 2 r's because its already a thing
+    i2c_master_start();
+    i2c_master_send(address<<1);
+    i2c_master_send(registerr);
+    i2c_master_send(data);
+    i2c_master_stop();
+}
+
+unsigned char i2c_read(unsigned char address, unsigned char registerr) {
+    unsigned char r;
+    i2c_master_start();
+    i2c_master_send(address<<1);
+    i2c_master_send(registerr);
+    i2c_master_restart();
+    i2c_master_write(address<<1);
+    r = i2c_master_recv();
+    i2c_master_ack(1);
+    i2c_master_stop();
+    return r;
 }
