@@ -3,7 +3,8 @@
 // Change I2C1 to the I2C channel you are using
 // I2C pins need pull-up resistors, 2k-10k
 #include "I2C.h"
-#define EXPANDER 0b01000000 //A1,A2,A3 = 0
+#include <xc.h>
+#define SLAVE 0b00100000 //A1,A2,A3 = 0
 
 void i2c_master_setup(void) {
   I2C2BRG = 233;            // I2CBRG = [1/(2*Fsck) - PGD]*Pblck - 2 Fsck = 100kHz PGD = 104ns
@@ -51,26 +52,32 @@ void i2c_master_stop(void) {          // send a STOP:
 void initExpander(void) {
     ANSELBbits.ANSB2 = 0; //turn off analog on B2 (SDA2)
     ANSELBbits.ANSB3 = 0; //turn off analog on B3 (SCL2)
-    i2c_write(EXPANDER,0x00,0b11110000); //set GP0-3 as output, GP4-7 are inputs
-    i2c_write(EXPANDER,0x05,0b00100000); //SEQOP off
+    i2c_write(SLAVE,0x00,0b00001111); //set GP0-3 as output, GP4-7 are inputs
+    i2c_write(SLAVE,0x06,0b11110000); //pullup resistors
 }
 
 void setExpander(char level, char pin) {
     unsigned char data = 0b00000000;
-    data = (data|level)<<pin;
-    i2c_write(EXPANDER,0x09,data);
+    if (level == 1) {
+        data = 0b00000001;
+    }
+    if (level == 0) {
+        data = 0b00000000;
+    }
+    //data = (data|level) << pin;
+    i2c_write(SLAVE,0x09,data);
 }
 
 char getExpander() {
     unsigned char r;
-    r = i2c_read(EXPANDER,0x09); //receive state of pins
+    r = i2c_read(SLAVE,0x09); //receive state of pins
     return r;
 }
 
 void i2c_write(unsigned char address, unsigned char registerr, unsigned char data) {
     //had to spell register with 2 r's because its already a thing
     i2c_master_start();
-    i2c_master_send(address<<1);
+    i2c_master_send(address << 1 | 0);
     i2c_master_send(registerr);
     i2c_master_send(data);
     i2c_master_stop();
@@ -79,10 +86,10 @@ void i2c_write(unsigned char address, unsigned char registerr, unsigned char dat
 unsigned char i2c_read(unsigned char address, unsigned char registerr) {
     unsigned char r;
     i2c_master_start();
-    i2c_master_send(address<<1);
+    i2c_master_send(address << 1 | 0);
     i2c_master_send(registerr);
     i2c_master_restart();
-    i2c_master_write(address<<1);
+    i2c_master_send(address << 1 | 1);
     r = i2c_master_recv();
     i2c_master_ack(1);
     i2c_master_stop();
