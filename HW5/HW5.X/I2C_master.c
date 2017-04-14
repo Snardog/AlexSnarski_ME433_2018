@@ -4,7 +4,7 @@
 // I2C pins need pull-up resistors, 2k-10k
 #include "I2C.h"
 #include <xc.h>
-#define SLAVE 0b00100000 //A1,A2,A3 = 0
+#define SLAVE 0b0010000 //A1,A2,A3 = 0
 
 void i2c_master_setup(void) {
   I2C2BRG = 233;            // I2CBRG = [1/(2*Fsck) - PGD]*Pblck - 2 Fsck = 100kHz PGD = 104ns
@@ -52,32 +52,48 @@ void i2c_master_stop(void) {          // send a STOP:
 void initExpander(void) {
     ANSELBbits.ANSB2 = 0; //turn off analog on B2 (SDA2)
     ANSELBbits.ANSB3 = 0; //turn off analog on B3 (SCL2)
-    i2c_write(SLAVE,0x00,0b00001111); //set GP0-3 as output, GP4-7 are inputs
-    i2c_write(SLAVE,0x06,0b11110000); //pullup resistors
+    //i2c_write(SLAVE,0x00,0b11110000); //set GP0-3 as output, GP4-7 are inputs
+    //i2c_write(SLAVE,0x06,0b11110000); //turn on pull up resistors for output pins
+    i2c_master_start();
+    i2c_master_send(SLAVE<<1);
+    i2c_master_send(0x00); // I/O register (0x00)
+    i2c_master_send(0b11110000); // Pins 0-3 output, 4-7 input
+    i2c_master_stop();
+    
+    i2c_master_start();
+    i2c_master_send(SLAVE<<1);
+    i2c_master_send(0x06); // Pull up resister register (0x06)
+    i2c_master_send(0b11110000); // Turn pull ups on for pins 4-7 (output pins)
+    i2c_master_stop();
 }
 
-void setExpander(char level, char pin) {
-    unsigned char data = 0b00000000;
+void setExpander(unsigned char level,unsigned char pin) {
+    //unsigned char gpioVal = level << pin;
+    unsigned char data = 0b11111111;
     if (level == 1) {
-        data = 0b00000001;
+        data = 0b00000001; // Bit 0 high when button is pressed
     }
     if (level == 0) {
-        data = 0b00000000;
+        data = 0b00000000; // Bit 0 low when button is pressed
     }
-    //data = (data|level) << pin;
-    i2c_write(SLAVE,0x09,data);
+    //i2c_write(SLAVE,0x09,data);
+    i2c_master_start();
+    i2c_master_send(SLAVE<<1);
+    i2c_master_send(0x09); //GPIO register (0x09)
+    i2c_master_send(data);
+    i2c_master_stop();
 }
 
-char getExpander() {
-    unsigned char r;
-    r = i2c_read(SLAVE,0x09); //receive state of pins
-    return r;
+char getExpander(char pin) {
+    unsigned char read = i2c_read(SLAVE,0x09);
+    read = read >> pin;
+    return read;
 }
 
 void i2c_write(unsigned char address, unsigned char registerr, unsigned char data) {
     //had to spell register with 2 r's because its already a thing
     i2c_master_start();
-    i2c_master_send(address << 1 | 0);
+    i2c_master_send(address<<1|0);
     i2c_master_send(registerr);
     i2c_master_send(data);
     i2c_master_stop();
@@ -86,7 +102,7 @@ void i2c_write(unsigned char address, unsigned char registerr, unsigned char dat
 unsigned char i2c_read(unsigned char address, unsigned char registerr) {
     unsigned char r;
     i2c_master_start();
-    i2c_master_send(address << 1 | 0);
+    i2c_master_send(address << 1);
     i2c_master_send(registerr);
     i2c_master_restart();
     i2c_master_send(address << 1 | 1);
