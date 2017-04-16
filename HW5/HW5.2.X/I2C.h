@@ -12,7 +12,7 @@ void i2c_master_ack(int val);             // send an ACK (0) or NACK (1)
 void i2c_master_stop(void);               // send a stop
 void initExpander(void);
 void setExpander(unsigned char level, unsigned char pin);
-char getExpander(char pin);
+char getExpander();
 void i2c_write(unsigned char address, unsigned char registerr, unsigned char data);
 unsigned char i2c_read(unsigned char address, unsigned char registerr);
 #endif
