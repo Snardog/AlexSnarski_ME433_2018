@@ -190,6 +190,49 @@ void LCD_clearScreen(unsigned short color) {
 		}
 }
 
-void display_character(unsigned char c, unsigned short x, unsigned short y, unsigned short color, unsigned short bg_color) {
-    //draw the character
+void draw_character (unsigned char letter, unsigned short x, unsigned short y, unsigned short color, unsigned short background) {
+    int i = 0;
+    int j = 0;
+    char ascii_row = letter - 0x20;
+    
+    for (i = 0; i < 5; i++) {
+        if (x + i < 128) {
+            for (j = 0; j < 8; j++) {
+                if (y + j < 128) {
+                    if ((ASCII[ascii_row][i] >> j) & 1 == 1) {
+                        LCD_drawPixel(x+i,y+j,color);
+                    }
+                    else {
+                        LCD_drawPixel(x+i,y+j,background);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void draw_string (unsigned char* string, unsigned short x, unsigned short y, unsigned short color, unsigned short background) {
+    char c = *string;
+    unsigned short count = 0;
+    while (c != 0) {
+        draw_character(c,x+count*5,y,color,background);
+        count++;
+        c = *(string + count);
+    }
+}
+
+void draw_bar (unsigned short thickness, unsigned short width, unsigned short x, unsigned short y, unsigned short bar_color, unsigned short back_color) {
+    int w = 0;
+    int t = 0;
+    
+    for (w = 0; w < 128; w++) {
+        for (t = y; t < y + thickness; t++) {
+            if (w < x || w > (x + width)) {
+                LCD_drawPixel(w,t,back_color);
+            }
+            else {
+                LCD_drawPixel(w,t,bar_color);
+            }
+        }
+    }
 }
