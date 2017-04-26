@@ -17,8 +17,8 @@
                    projectFiles="true">
       <itemPath>LCD.c</itemPath>
       <itemPath>PIC32.c</itemPath>
-      <itemPath>I2C_master.c</itemPath>
       <itemPath>main.c</itemPath>
+      <itemPath>I2C_IMU.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

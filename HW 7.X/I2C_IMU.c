@@ -4,7 +4,7 @@
 // I2C pins need pull-up resistors, 2k-10k
 #include "I2C.h"
 #include <xc.h>
-#define SLAVE 0b1101011
+
 
 void i2c_master_setup(void) {
   I2C2BRG = 233;            // I2CBRG = [1/(2*Fsck) - PGD]*Pblck - 2 Fsck = 100kHz PGD = 104ns
@@ -58,6 +58,23 @@ void initExpander(void) {
     i2c_write(SLAVE,CTRL2_G,0b10001000); //bits 0: n/a; bit 1: n/a; bits 2-3: 1000dps; bits 4-7: 1.66kHz sample rate
     //initialize IF_INC
     i2c_write(SLAVE,CTRL3_C,0b00000100); //bit 3: IF_INC enabled
+//    i2c_master_start();
+//    i2c_master_send(SLAVE << 1); // Write 
+//    i2c_master_send(0x10); // CTRL1_XL
+//    i2c_master_send(0x82); // Set the sample rate to 1.66 kHz, with 2g sensitivity, and 100 Hz filter
+//    i2c_master_stop();
+//    // Turn on gyroscrope
+//    i2c_master_start();
+//    i2c_master_send(SLAVE << 1); // Write
+//    i2c_master_send(0x11); // CTRL2_G
+//    i2c_master_send(0x88); // Set the sample rate to 1.66 kHz, with 1000 dps sensitivity
+//    i2c_master_stop();
+//    // Enable reading multiple registers in a row
+//    i2c_master_start();
+//    i2c_master_send(SLAVE  << 1); // Write
+//    i2c_master_send(0x12); // CTRL3_C
+//    i2c_master_send(0x04); // Set IF_INC bit 1
+//    i2c_master_stop();
 }
 
 void setExpander(unsigned char level,unsigned char pin) {
@@ -90,6 +107,26 @@ unsigned char i2c_read(unsigned char address, unsigned char registerr) {
     i2c_master_ack(1);
     i2c_master_stop();
     return r;
+}
+
+void I2C_read_multiple(unsigned char address, unsigned char registerr, unsigned char *data, int length) {
+    int i = 0;
+    //int ackval = 0;
+    i2c_master_start();
+    i2c_master_send(address << 1);
+    i2c_master_send(registerr);
+    i2c_master_restart();
+    i2c_master_send((address << 1) | 1);
+    for (i = 0; i < length; i++) {
+        data[i] = i2c_master_recv();
+        if ( i == length - 1) {
+            i2c_master_ack(1);
+        }
+        else {
+            i2c_master_ack(0);
+        }
+    }
+    i2c_master_stop();
 }
 
 

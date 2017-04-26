@@ -4,6 +4,6 @@
 #include<sys/attribs.h>  // __ISR macro
 
 void PIC32_Startup(void);
-
+void delay(int time);
 
 #endif

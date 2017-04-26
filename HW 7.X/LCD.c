@@ -221,18 +221,12 @@ void draw_string (unsigned char* string, unsigned short x, unsigned short y, uns
     }
 }
 
-void draw_bar (unsigned short thickness, unsigned short width, unsigned short x, unsigned short y, unsigned short bar_color, unsigned short back_color) {
-    int w = 0;
-    int t = 0;
-    
-    for (w = 0; w < 128; w++) {
-        for (t = y; t < y + thickness; t++) {
-            if (w < x || w > (x + width)) {
-                LCD_drawPixel(w,t,back_color);
-            }
-            else {
-                LCD_drawPixel(w,t,bar_color);
-            }
+void drawBar(unsigned short x, unsigned short y, char length, char width, unsigned short color) {
+    int i, j;
+    for (i = 0; i < length; i++) {
+        for (j = 0; j < width; j++) {
+            LCD_drawPixel(i+x,j+y,color);
         }
     }
 }
+

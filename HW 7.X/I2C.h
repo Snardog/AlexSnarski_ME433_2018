@@ -2,10 +2,12 @@
 #define I2C__H__
 // Header file for i2c_master_noint.c
 // helps implement use I2C1 as a master without using interrupts
-
+#define SLAVE 0b1101011
 #define CTRL1_XL 0x10
 #define CTRL2_G 0x11
 #define CTRL3_C 0x12
+#define OUT_TEMP_L 0x20
+#define WHOAMI 0x0F
 
 void i2c_master_setup(void);              // set up I2C 1 as a master, at 100 kHz
 void i2c_master_start(void);              // send a START signal
@@ -19,4 +21,5 @@ void setExpander(unsigned char level, unsigned char pin);
 char getExpander();
 void i2c_write(unsigned char address, unsigned char registerr, unsigned char data);
 unsigned char i2c_read(unsigned char address, unsigned char registerr);
+void I2C_read_multiple(unsigned char address, unsigned char registerr, unsigned char *data, int length);
 #endif

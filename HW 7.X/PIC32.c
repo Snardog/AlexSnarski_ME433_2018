@@ -58,3 +58,8 @@ void PIC32_Startup() {
     LATAbits.LATA4 = 1; // turn the LED on
     __builtin_enable_interrupts();
 }
+
+void delay(int time) {
+    _CP0_SET_COUNT(0);
+    while(_CP0_GET_COUNT() < time) {;}
+}

@@ -178,5 +178,5 @@ void LCD_setAddr(unsigned short, unsigned short, unsigned short, unsigned short)
 void LCD_clearScreen(unsigned short); // set the color of every pixel
 void draw_character (unsigned char letter, unsigned short x, unsigned short y, unsigned short color, unsigned short background);
 void draw_string (unsigned char* string, unsigned short x, unsigned short y, unsigned short color, unsigned short background);
-void draw_bar (unsigned short thickness, unsigned short width, unsigned short x, unsigned short y, unsigned short bar_color, unsigned short back_color);
+void draw_bar (unsigned short thickness, unsigned short length, unsigned short x, unsigned short y, unsigned short color);
 #endif

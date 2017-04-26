@@ -6,6 +6,7 @@
                    projectFiles="true">
       <itemPath>PIC32.h</itemPath>
       <itemPath>LCD.h</itemPath>
+      <itemPath>I2C.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
