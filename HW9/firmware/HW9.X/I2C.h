@@ -21,5 +21,5 @@ void setExpander(unsigned char level, unsigned char pin);
 char getExpander();
 void i2c_write(unsigned char address, unsigned char registerr, unsigned char data);
 unsigned char i2c_read(unsigned char address, unsigned char registerr);
-void I2C_read_multiple(unsigned char address, unsigned char registerr, unsigned char *data, int length);
+//void I2C_read_multiple(unsigned char address, unsigned char registerr, unsigned char *data, int length);
 #endif

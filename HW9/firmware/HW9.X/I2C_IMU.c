@@ -58,23 +58,7 @@ void initExpander(void) {
     i2c_write(SLAVE,CTRL2_G,0b10001000); //bits 0: n/a; bit 1: n/a; bits 2-3: 1000dps; bits 4-7: 1.66kHz sample rate
     //initialize IF_INC
     i2c_write(SLAVE,CTRL3_C,0b00000100); //bit 3: IF_INC enabled
-//    i2c_master_start();
-//    i2c_master_send(SLAVE << 1); // Write 
-//    i2c_master_send(0x10); // CTRL1_XL
-//    i2c_master_send(0x82); // Set the sample rate to 1.66 kHz, with 2g sensitivity, and 100 Hz filter
-//    i2c_master_stop();
-//    // Turn on gyroscrope
-//    i2c_master_start();
-//    i2c_master_send(SLAVE << 1); // Write
-//    i2c_master_send(0x11); // CTRL2_G
-//    i2c_master_send(0x88); // Set the sample rate to 1.66 kHz, with 1000 dps sensitivity
-//    i2c_master_stop();
-//    // Enable reading multiple registers in a row
-//    i2c_master_start();
-//    i2c_master_send(SLAVE  << 1); // Write
-//    i2c_master_send(0x12); // CTRL3_C
-//    i2c_master_send(0x04); // Set IF_INC bit 1
-//    i2c_master_stop();
+
 }
 
 void setExpander(unsigned char level,unsigned char pin) {

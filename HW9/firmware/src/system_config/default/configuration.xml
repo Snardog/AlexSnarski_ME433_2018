@@ -5,7 +5,7 @@
     <SystemStartScript/>
   </DisplayManager>
   <General>
-    <HarmonyPath path="../../../../../../../microchip/harmony/v1_09"/>
+    <HarmonyPath path="../../../../../microchip/harmony/v1_09"/>
     <Processor name=""/>
     <ForceOptimization flag="true"/>
     <MergeStrategy flag="USER_ALL"/>
@@ -221,7 +221,6 @@
         <Name>system_config.h</Name>
         <Path>Header Files/app/system_config/default</Path>
         <Checksum>AD726FB9F525FF536C8DB34CCA92D72D</Checksum>
-        <ProjectFileChecksum>0C4C78ABB1ED53793E961850CAC515B3</ProjectFileChecksum>
       </Template>
       <Template>
         <Name>system_definitions.h</Name>
@@ -259,11 +258,11 @@
     </Templates>
     <CompilerItems>
       <C32>
-        <Include value="C:\Users\Alex\Documents\AlexSnarski_ME433_2018\HW9\firmware\src"/>
-        <Include value="C:\Users\Alex\Documents\AlexSnarski_ME433_2018\HW9\firmware\src\system_config\default"/>
-        <Include value="C:\Users\Alex\Documents\AlexSnarski_ME433_2018\HW9\firmware\src\default"/>
-        <Include value="C:\microchip\harmony\v1_09\framework"/>
-        <Include value="C:\Users\Alex\Documents\AlexSnarski_ME433_2018\HW9\firmware\src\system_config\default\framework"/>
+        <Include value="C:/Users/Alex/Documents/AlexSnarski_ME433_2018/HW9/firmware/src"/>
+        <Include value="C:/Users/Alex/Documents/AlexSnarski_ME433_2018/HW9/firmware/src/system_config/default"/>
+        <Include value="C:/Users/Alex/Documents/AlexSnarski_ME433_2018/HW9/firmware/src/default"/>
+        <Include value="C:/microchip/harmony/v1_09/framework"/>
+        <Include value="C:/Users/Alex/Documents/AlexSnarski_ME433_2018/HW9/firmware/src/system_config/default/framework"/>
       </C32>
     </CompilerItems>
     <Libraries>

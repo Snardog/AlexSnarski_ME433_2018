@@ -51,9 +51,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "app.h"
 #include <stdio.h>
 #include <xc.h>
-#include "LCD.h"
 #include "I2C.h"
-#include <math.h>
+#include "math.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -61,17 +60,18 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 // *****************************************************************************
 
-#define SLAVE 0b1101011
-#define SCALE 60.0/16383.0
+//#define SLAVE 0b1101011
+//#define SLAVE 0x20
+#define SCALE 60/16383
 #define BARWIDTH 10
 
 uint8_t APP_MAKE_BUFFER_DMA_READY dataOut[APP_READ_BUFFER_SIZE];
 uint8_t APP_MAKE_BUFFER_DMA_READY readBuffer[APP_READ_BUFFER_SIZE];
 int len, i = 0;
-int count = 0;
 int startTime = 0;
-bool printData = false;
-static volatile unsigned char data[14];
+int count = 0;
+int printData = 0;
+unsigned char data[14];
 static int length = 14;
 short temp;
 short gyro_x;
@@ -104,6 +104,9 @@ APP_DATA appData;
 // *****************************************************************************
 // *****************************************************************************
 
+/* TODO:  Add any necessary callback functions.
+ */
+
 short combine_data(char *data, int index) {
     short high_bit;
     short low_bit;
@@ -113,18 +116,7 @@ short combine_data(char *data, int index) {
     return val;
 }
 
-short seperate_data(data) {
-    temp = combine_data(data, 0);
-    gyro_x = combine_data(data, 2);
-    gyro_y = combine_data(data, 4);
-    gyro_z = combine_data(data, 6);
-    accel_x = combine_data(data, 8);
-    accel_y = combine_data(data, 10);
-    accel_z = combine_data(data, 12);
-}
 
-/* TODO:  Add any necessary callback functions.
- */
 
 /*******************************************************
  * USB CDC Device Events - Application Event Handler
@@ -338,18 +330,14 @@ bool APP_StateReset(void) {
 
 void APP_Initialize(void) {
     /* Place the App state machine in its initial state. */
-    SPI1_init();
-    LCD_init();
-    i2c_master_setup();
-    initExpander();
-    TRISAbits.TRISA4 = 0; // A4 is a digital output
-    TRISBbits.TRISB4 = 1; // B4 is input
-    LATAbits.LATA4 = 1; // turn the LED on
-    count = 0;
-    LCD_clearScreen(WHITE);
-
+    
+    
     appData.state = APP_STATE_INIT;
-
+    
+    TRISAbits.TRISA4 = 0;
+    LATAbits.LATA4 = 1;
+    TRISBbits.TRISB4 = 1;
+    
     /* Device Layer Handle  */
     appData.deviceHandle = USB_DEVICE_HANDLE_INVALID;
 
@@ -382,6 +370,11 @@ void APP_Initialize(void) {
     appData.readBuffer = &readBuffer[0];
 
     startTime = _CP0_GET_COUNT();
+    
+    i2c_master_setup();
+    initExpander();
+    //i2c_master_setup();
+    //initExpander();
 }
 
 /******************************************************************************
@@ -439,6 +432,10 @@ void APP_Tasks(void) {
                 USB_DEVICE_CDC_Read(USB_DEVICE_CDC_INDEX_0,
                         &appData.readTransferHandle, appData.readBuffer,
                         APP_READ_BUFFER_SIZE);
+                if (appData.readBuffer[0] == 'r'){
+                    printData = 1;
+                }
+                
 
                 if (appData.readTransferHandle == USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID) {
                     appData.state = APP_STATE_ERROR;
@@ -449,19 +446,6 @@ void APP_Tasks(void) {
             break;
 
         case APP_STATE_WAIT_FOR_READ_COMPLETE:
-            if (appData.isReadComplete) {
-                if (appData.readBuffer[0] = 'r') {
-                    printData = true;
-                    count = 0;
-                } else if (appData.readBuffer[0] != 'r') {
-                    printData = false;
-                    appData.state = APP_STATE_SCHEDULE_READ;
-                }
-                //                if (printData) {
-                //                    appData.state = APP_STATE_CHECK_TIMER;
-                //                }
-            }
-            break;
         case APP_STATE_CHECK_TIMER:
 
             if (APP_StateReset()) {
@@ -471,7 +455,7 @@ void APP_Tasks(void) {
             /* Check if a character was received or a switch was pressed.
              * The isReadComplete flag gets updated in the CDC event handler. */
 
-            if (appData.isReadComplete || _CP0_GET_COUNT() - startTime > (48000000 / 2 / 5)) {
+            if (appData.isReadComplete || _CP0_GET_COUNT() - startTime > (48000000 / 2 / 100)) {
                 appData.state = APP_STATE_SCHEDULE_WRITE;
             }
 
@@ -489,32 +473,44 @@ void APP_Tasks(void) {
             appData.writeTransferHandle = USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID;
             appData.isWriteComplete = false;
             appData.state = APP_STATE_WAIT_FOR_WRITE_COMPLETE;
-
-            I2C_read_multiple(SLAVE, OUT_TEMP_L, *data, 14); // read data from IMU and separate into shorts
-            temp = combine_data(data, 0);
-            gyro_x = combine_data(data, 2);
-            gyro_y = combine_data(data, 4);
-            gyro_z = combine_data(data, 6);
-            accel_x = combine_data(data, 8);
-            accel_y = combine_data(data, 10);
-            accel_z = combine_data(data, 12);
-            //format data for USB to send
-            len = sprintf(dataOut, '%d ax=%.2f ay=%.2f az=%.2f gx=%.2f gy=%.2f gz=%.2f\r\n',count, accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z);
-            count++;
-            if (count == 101) { // stop printing after 100 values
-                count = 0;
-                printData = false;
-            }
+            dataOut[0] = 0;
             if (appData.isReadComplete) {
                 USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
-                        &appData.writeTransferHandle,
-                        appData.readBuffer, 1,
-                        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
+                            &appData.writeTransferHandle,
+                            appData.readBuffer, 1,
+                            USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
+                if (appData.readBuffer[0] == 'r') {
+                    printData = 1;
+                }
+            }
+            else if (printData == 1) {
+                I2C_read_multiple(SLAVE,OUT_TEMP_L,data,14);
+                temp = combine_data(data,0);
+                gyro_x = combine_data(data,2);
+                gyro_y = combine_data(data,4);
+                gyro_z = combine_data(data,6);
+                accel_x = combine_data(data,8);
+                accel_y = combine_data(data,10);
+                accel_z = combine_data(data,12);
+                
+                len = sprintf(dataOut,"%d: ax=%d ay=%d az=%d gx=%d gy=%d gz=%d\r\n",count,accel_x,accel_y,accel_z,gyro_x,gyro_y,gyro_z);
+                //len = sprintf(dataOut,"%d\r\n",count);
+                count++;
+                USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
+                            &appData.writeTransferHandle, dataOut,len,
+                            USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
+                startTime = _CP0_GET_COUNT();
+                if (count == 100) {
+                    count = 0;
+                    printData = 0;
+                }
             }
             else {
-                USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0, //send nothing until another r is received
-                        &appData.writeTransferHandle, dataOut, len,
-                        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
+                len = 1;
+                dataOut[0] = 0;
+                USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
+                            &appData.writeTransferHandle, dataOut, len,
+                            USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
                 startTime = _CP0_GET_COUNT();
             }
             break;

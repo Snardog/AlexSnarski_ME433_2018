@@ -2,8 +2,10 @@
 // The functions must be callled in the correct order as per the I2C protocol
 // Change I2C1 to the I2C channel you are using
 // I2C pins need pull-up resistors, 2k-10k
-#include "I2C.h"
+
 #include <xc.h>
+#include "I2C.h"
+
 
 
 void i2c_master_setup(void) {
