@@ -63,7 +63,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             paint1.setColor(0xffff0000); // red
             paint1.setTextSize(24);
 
-            mTextView.setText("started camera");
+            //mTextView.setText("started camera");
         } else {
             mTextView.setText("no camera permissions");
         }
@@ -127,14 +127,16 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         canvas.drawCircle(pos, 240, 5, paint1); // x position, y position, diameter, color
 
         // write the pos as text
-        canvas.drawText("Pos = " + thresh, 10, 200, paint1);
+        canvas.drawText("Thresh = " + thresh, 10, 200, paint1);
         c.drawBitmap(bmp, 0, 0, null);
         mSurfaceHolder.unlockCanvasAndPost(c);
 
         // calculate the FPS to see how fast the code is running
         long nowtime = System.currentTimeMillis();
         long diff = nowtime - prevtime;
-        mTextView.setText("FPS " + 1000 / diff);
+        long FPS = 1000/diff;
+       // mTextView.setText("FPS " + 1000 / diff);
+        canvas.drawText("FPS = "+ FPS, 10, 210,paint1);
         prevtime = nowtime;
     }
 

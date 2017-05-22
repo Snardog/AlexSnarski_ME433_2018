@@ -15,7 +15,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         myControl = (SeekBar) findViewById(R.id.seek1);
         myTextView = (TextView) findViewById(R.id.textView01);
-        myTextView.setText("Soisoisoisoisoi");
+        myTextView.setText("Initial Value");
         setMyControlListener();
     }
 
