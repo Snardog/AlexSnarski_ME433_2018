@@ -19,8 +19,8 @@
           </logicalFolder>
         </logicalFolder>
         <itemPath>../src/app.h</itemPath>
-        <itemPath>I2C.h</itemPath>
-        <itemPath>LCD.h</itemPath>
+        <itemPath>../src/mouse.h</itemPath>
+        <itemPath>../src/I2C.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="framework" projectFiles="true">
         <logicalFolder name="f5" displayName="driver" projectFiles="true">
@@ -92,14 +92,14 @@
           <logicalFolder name="f1" displayName="src" projectFiles="true">
             <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/src/usb_device_local.h</itemPath>
             <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/src/usb_device_mapping.h</itemPath>
-            <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/src/usb_device_cdc_local.h</itemPath>
+            <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/src/usb_device_hid_local.h</itemPath>
           </logicalFolder>
           <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/usb_device.h</itemPath>
           <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/usb_billboard.h</itemPath>
           <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/usb_chapter_9.h</itemPath>
           <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/usb_common.h</itemPath>
-          <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/usb_cdc.h</itemPath>
-          <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/usb_device_cdc.h</itemPath>
+          <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/usb_hid.h</itemPath>
+          <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/usb_device_hid.h</itemPath>
         </logicalFolder>
       </logicalFolder>
     </logicalFolder>
@@ -135,8 +135,8 @@
         </logicalFolder>
         <itemPath>../src/app.c</itemPath>
         <itemPath>../src/main.c</itemPath>
-        <itemPath>I2C_IMU.c</itemPath>
-        <itemPath>LCD.c</itemPath>
+        <itemPath>../src/mouse.c</itemPath>
+        <itemPath>../src/I2C_IMU.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="framework" projectFiles="true">
         <logicalFolder name="f2" displayName="driver" projectFiles="true">
@@ -168,8 +168,7 @@
           <logicalFolder name="f1" displayName="src" projectFiles="true">
             <logicalFolder name="f1" displayName="dynamic" projectFiles="true">
               <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/src/dynamic/usb_device.c</itemPath>
-              <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/src/dynamic/usb_device_cdc.c</itemPath>
-              <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/src/dynamic/usb_device_cdc_acm.c</itemPath>
+              <itemPath>../../../../../../../microchip/harmony/v1_09/framework/usb/src/dynamic/usb_device_hid.c</itemPath>
             </logicalFolder>
           </logicalFolder>
         </logicalFolder>
@@ -198,7 +197,7 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC32</languageToolchain>
-        <languageToolchainVersion>1.43</languageToolchainVersion>
+        <languageToolchainVersion>1.40</languageToolchainVersion>
         <platform>3</platform>
       </toolsSet>
       <compileType>
