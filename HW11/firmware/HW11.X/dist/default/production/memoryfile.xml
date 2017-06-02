@@ -10,8 +10,8 @@
     <memory name="data">              
       <units>bytes</units>                 
       <length>32768</length>                 
-      <used>912</used>                     
-      <free>31856</free>                     
+      <used>752</used>                     
+      <free>32016</free>                     
     </memory>                              
   </executable>                            
 </project>                                 

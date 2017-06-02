@@ -397,24 +397,37 @@ void APP_Tasks(void) {
              * else wait for the current read to complete */
 
             appData.state = APP_STATE_WAIT_FOR_READ_COMPLETE;
-             int ii = 0;
-                // loop thru the characters in the buffer
-                while (appData.readBuffer[ii] != 0) {
-                    // if you got a newline
-                    if (appData.readBuffer[ii] == '\n' || appData.readBuffer[ii] == '\r') {
-                        rx[rxPos] = 0; // end the array
-                        sscanf(rx, "%d", &rxVal); // get the int out of the array
-                        gotRx = 1; // set the flag
-                        break; // get out of the while loop
-                    } else if (appData.readBuffer[ii] == 0) {
-                        break; // there was no newline, get out of the while loop
-                    } else {
-                        // save the character into the array
-                        rx[rxPos] = appData.readBuffer[ii];
-                        rxPos++;
-                        ii++;
-                    }
+            if (appData.isReadComplete == true) {
+                appData.isReadComplete = false;
+                appData.readTransferHandle = USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID;
+
+                USB_DEVICE_CDC_Read(USB_DEVICE_CDC_INDEX_0,
+                        &appData.readTransferHandle, appData.readBuffer,
+                        APP_READ_BUFFER_SIZE);
+
+                if (appData.readTransferHandle == USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID) {
+                    appData.state = APP_STATE_ERROR;
+                    break;
                 }
+                int ii = 0;
+                   // loop thru the characters in the buffer
+                   while (appData.readBuffer[ii] != 0) {
+                       // if you got a newline
+                       if (appData.readBuffer[ii] == '\n' || appData.readBuffer[ii] == '\r') {
+                           rx[rxPos] = 0; // end the array
+                           sscanf(rx, "%d", &rxVal); // get the int out of the array
+                           gotRx = 1; // set the flag
+                           break; // get out of the while loop
+                       } else if (appData.readBuffer[ii] == 0) {
+                           break; // there was no newline, get out of the while loop
+                       } else {
+                           // save the character into the array
+                           rx[rxPos] = appData.readBuffer[ii];
+                           rxPos++;
+                           ii++;
+                       }
+                   }
+            }
 
 
             break;
@@ -448,7 +461,7 @@ void APP_Tasks(void) {
             appData.isWriteComplete = false;
             appData.state = APP_STATE_WAIT_FOR_WRITE_COMPLETE;
             if (gotRx) {
-                len = sprintf(dataOut, "%got: %d \r\n", rxVal);
+                len = sprintf(dataOut, "got: %d\r\n", rxVal);
                 i++;
                 USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
                         &appData.writeTransferHandle, dataOut, len,
